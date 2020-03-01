@@ -23,7 +23,7 @@ from keras import backend
 backend.clear_session()
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--input",help="path to input video", default = "./test_video/det_t1_video_00315_test.avi")
-ap.add_argument("-c", "--class",help="name of class", default = "person")
+# ap.add_argument("-c", "--class",help="name of class", default = "person")
 args = vars(ap.parse_args())
 
 pts = [deque(maxlen=30) for _ in range(9999)]
@@ -59,7 +59,7 @@ def main(yolo):
         w = int(video_capture.get(3))
         h = int(video_capture.get(4))
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        out = cv2.VideoWriter('./output/'+args["input"][43:57]+ "_" + args["class"] + '_output.avi', fourcc, 15, (w, h))
+        out = cv2.VideoWriter('./output/'+args["input"]+'_output.avi', fourcc, 15, (w, h))
         list_file = open('detection.txt', 'w')
         frame_index = -1
 
@@ -77,7 +77,7 @@ def main(yolo):
         boxs,class_names = yolo.detect_image(image)
         features = encoder(frame,boxs)
         # score to 1.0 here).
-        detections = [Detection(bbox, 1.0, feature) for bbox, feature in zip(boxs, features)]
+        detections = [Detection(bbox, 1.0, feature,cl) for bbox, feature,cl in zip(boxs, features,class_names)]
         # Run non-maxima suppression.
         boxes = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])
@@ -106,10 +106,11 @@ def main(yolo):
             color = [int(c) for c in COLORS[indexIDs[i] % len(COLORS)]]
 
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),(color), 3)
-            cv2.putText(frame,str(track.track_id),(int(bbox[0]), int(bbox[1] -50)),0, 5e-3 * 150, (color),2)
-            if len(class_names) > 0:
-               class_name = class_names[0]
-               cv2.putText(frame, str(class_names[0]),(int(bbox[0]), int(bbox[1] -20)),0, 5e-3 * 150, (color),2)
+            cv2.putText(frame,str(track.track_id),(int(bbox[0]), int(bbox[1] -50)),0, 1.5, (0,0,0),16)
+            cv2.putText(frame,str(track.track_id),(int(bbox[0]), int(bbox[1] -50)),0, 1.5, (color),4)
+
+            cv2.putText(frame, track.cl[0],(int(bbox[0]), int(bbox[1] -20)),0, 1.5, (0,0,0),16)
+            cv2.putText(frame, track.cl[0],(int(bbox[0]), int(bbox[1] -20)),0, 1.5, (color),4)
 
             i += 1
             #bbox_center_point(x,y)
@@ -129,12 +130,20 @@ def main(yolo):
                 #cv2.putText(frame, str(class_names[j]),(int(bbox[0]), int(bbox[1] -20)),0, 5e-3 * 150, (255,255,255),2)
 
         count = len(set(counter))
-        cv2.putText(frame, "Total Object Counter: "+str(count),(int(20), int(120)),0, 5e-3 * 200, (0,255,0),2)
-        cv2.putText(frame, "Current Object Counter: "+str(i),(int(20), int(80)),0, 5e-3 * 200, (0,255,0),2)
-        cv2.putText(frame, "FPS: %f"%(fps),(int(20), int(40)),0, 5e-3 * 200, (0,255,0),3)
-        cv2.namedWindow("YOLO3_Deep_SORT", 0);
-        cv2.resizeWindow('YOLO3_Deep_SORT', 1024, 768);
-        cv2.imshow('YOLO3_Deep_SORT', frame)
+        cv2.putText(frame, "github.com/yehengchen/Object-Detection-and-Tracking YOLOv3 (%dx%d)"%yolo.model_image_size,(20, 100),0, 2, (0,0,0),14)
+        cv2.putText(frame, "github.com/yehengchen/Object-Detection-and-Tracking YOLOv3 (%dx%d)"%yolo.model_image_size,(20, 100),0, 2, (255,255,255),4)
+
+        cv2.putText(frame, "Total Object Counter: "+str(count),(20, 400),0, 2, (0,0,0),14)
+        cv2.putText(frame, "Current Object Counter: "+str(i),(20, 300),0, 2, (0,0,0),14)
+        cv2.putText(frame, "FPS: %f"%(fps),(20, 200),0, 2, (0,0,0),14)
+        cv2.putText(frame, "Total Object Counter: "+str(count),(20, 400),0, 2, (255,255,255),4)
+        cv2.putText(frame, "Current Object Counter: "+str(i),(20, 300),0, 2, (255,255,255),4)
+        cv2.putText(frame, "FPS: %f"%(fps),(20, 200),0, 2, (255,255,255),4)
+        # cv2.namedWindow("YOLO3_Deep_SORT", 0);
+        # cv2.resizeWindow('YOLO3_Deep_SORT', 1024, 768);
+        # cv2.imshow('YOLO3_Deep_SORT', frame)
+
+        cv2.imwrite('/tmp/%08d.jpg'%frame_index,frame)
 
         if writeVideo_flag:
             #save a frame
@@ -147,7 +156,7 @@ def main(yolo):
             list_file.write('\n')
         fps  = ( fps + (1./(time.time()-t1)) ) / 2
         #print(set(counter))
-
+        print("Progress: %.2f%% (%d/45913) FPS: %f"%(100.0*frame_index/45913.0,frame_index, fps))
         # Press Q to stop!
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

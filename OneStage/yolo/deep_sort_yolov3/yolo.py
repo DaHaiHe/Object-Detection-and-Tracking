@@ -20,7 +20,7 @@ from yolo3.utils import letterbox_image
 import argparse
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--input",help="path to input video", default = "./test_video/det_t1_video_00315_test.avi")
-ap.add_argument("-c", "--class",help="name of class", default = "person")
+# ap.add_argument("-c", "--class",help="name of class", default = "person")
 args = vars(ap.parse_args())
 
 class YOLO(object):
@@ -29,19 +29,19 @@ class YOLO(object):
         self.anchors_path = 'model_data/yolo_anchors.txt'
         self.classes_path = 'model_data/coco_classes.txt'
         #具体参数可实验后进行调整
-        if args["class"] == 'person':
-           self.score = 0.6 #0.8
-           self.iou = 0.6
-           self.model_image_size = (416,416)
-        if args["class"] == 'car':
-           self.score = 0.6
-           self.iou = 0.6
-           self.model_image_size = (416, 416)
-        if args["class"] == 'bicycle' or args["class"] == 'motorcycle':
-           self.score = 0.6
-           self.iou = 0.6
-           self.model_image_size = (416, 416)
-        
+        # if args["class"] == 'person':
+        self.score = 0.6 #0.8
+        self.iou = 0.6
+        self.model_image_size = (608,608)
+        # if args["class"] == 'car':
+        #    self.score = 0.6
+        #    self.iou = 0.6
+        #    self.model_image_size = (416, 416)
+        # if args["class"] == 'bicycle' or args["class"] == 'motorcycle':
+        #    self.score = 0.6
+        #    self.iou = 0.6
+        #    self.model_image_size = (416, 416)
+
         self.class_names = self._get_class()
         self.anchors = self._get_anchors()
         self.sess = K.get_session()
@@ -123,11 +123,11 @@ class YOLO(object):
                print(predicted_class)
                continue
             '''
-            if predicted_class != args["class"]:
-               #print(predicted_class)
-               continue
+            if predicted_class == "person":
+                person_counter += 1
+            #    #print(predicted_class)
+            #    continue
 
-            person_counter += 1
             #if  predicted_class != 'car':
                 #continue
             #label = predicted_class
